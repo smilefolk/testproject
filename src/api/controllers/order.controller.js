@@ -2,115 +2,67 @@ const httpStatus = require('http-status');
 const moment = require('moment-timezone');
 const logger = require('../../config/logger');
 const path = require('path');
-const Test = require('../models/test.model');
+const Order = require('../models/order.model');
 
 const uploadDir = path.join(__dirname, '/..', '/..', '/..', '/uploads/');
 const fs = require('fs');
 
 exports.createOrder = async (req, res, next) => {
   try {
-    const { username, password, fname, lname, role } = req.body
-    const verifyTest = await Test.findOne({ username });
-    if (verifyTest) {
-      res.status(httpStatus.CONFLICT);
-      return res.json({ success: false, data: {}, message: { en: 'UserName is duplicate', th: 'ชื่อผู้ใช้ซ้ำ' } });
-    }
+    const { productCode, userCode, address } = req.body
+    const lastOrderNumber = await Order.count({});
+    const orderNumber = lastOrderNumber + 1
     const dataToSave = {
-      username,
-      password,
-      fname,
-      lname,
-      role,
-      created: new Date(),
-      lastUpldate: new Date(),
+      orderNumber,
+      productCode,
+      userCode,
+      address
     };
     console.log('dataToSave===>', dataToSave);
-    const user = await new Test(dataToSave).save();
+    const order = await new Order(dataToSave).save();
     res.status(httpStatus.CREATED);
 
-    return res.json({ success: true, data: user, message: { en: 'Success', th: 'สำเร็จ' } });
+    return res.json({ success: true, data: order, message: { en: 'Success', th: 'สำเร็จ' } });
   } catch (error) {
     next(error)
   }
 }
 
 exports.updateOrder = async (req, res, next) => {
-    try {
-      const { username, password, fname, lname, role } = req.body
-      const verifyTest = await Test.findOne({ username });
-      if (verifyTest) {
-        res.status(httpStatus.CONFLICT);
-        return res.json({ success: false, data: {}, message: { en: 'UserName is duplicate', th: 'ชื่อผู้ใช้ซ้ำ' } });
-      }
-      const dataToSave = {
-        username,
-        password,
-        fname,
-        lname,
-        role,
-        created: new Date(),
-        lastUpldate: new Date(),
-      };
-      console.log('dataToSave===>', dataToSave);
-      const user = await new Test(dataToSave).save();
-      res.status(httpStatus.CREATED);
-  
-      return res.json({ success: true, data: user, message: { en: 'Success', th: 'สำเร็จ' } });
-    } catch (error) {
-      next(error)
+  try {
+    console.log('updateOrder');
+    const dataToUpdate = Object.assign(req.body);
+    dataToUpdate.lastUpdate = new Date();
+    const { id } = req.params;
+    console.log('id', id)
+    console.log('dataToUpdate===>', dataToUpdate);
+    const order = await Order.update(id, dataToUpdate);
+    if (!order) {
+      res.json({ success: true, message: { en: 'Data not found.', th: 'ไม่พบข้อมูล' } });
     }
+    const newOrder = await Order.getById(id);
+    res.json({ success: true, data: newOrder, message: { en: 'Success', th: 'สำเร็จ' } });
+  } catch (error) {
+      next(error);
+  }
 }
 
 exports.removeOrder = async (req, res, next) => {
-    try {
-      const { username, password, fname, lname, role } = req.body
-      const verifyTest = await Test.findOne({ username });
-      if (verifyTest) {
-        res.status(httpStatus.CONFLICT);
-        return res.json({ success: false, data: {}, message: { en: 'UserName is duplicate', th: 'ชื่อผู้ใช้ซ้ำ' } });
-      }
-      const dataToSave = {
-        username,
-        password,
-        fname,
-        lname,
-        role,
-        created: new Date(),
-        lastUpldate: new Date(),
-      };
-      console.log('dataToSave===>', dataToSave);
-      const user = await new Test(dataToSave).save();
-      res.status(httpStatus.CREATED);
-  
-      return res.json({ success: true, data: user, message: { en: 'Success', th: 'สำเร็จ' } });
-    } catch (error) {
-      next(error)
-    }
+  try {
+    console.log('deleteOrder');
+    const { id } = req.params;
+    const order = await Order.remove(id);
+    res.json({ success: true, data: order, message: { en: 'Success', th: 'สำเร็จ' } });
+  } catch (error) {
+    next(error);
+  }
 }
 
 exports.listOrder = async (req, res, next) => {
-    try {
-      const { username, password, fname, lname, role } = req.body
-      const verifyTest = await Test.findOne({ username });
-      if (verifyTest) {
-        res.status(httpStatus.CONFLICT);
-        return res.json({ success: false, data: {}, message: { en: 'UserName is duplicate', th: 'ชื่อผู้ใช้ซ้ำ' } });
-      }
-      const dataToSave = {
-        username,
-        password,
-        fname,
-        lname,
-        role,
-        created: new Date(),
-        lastUpldate: new Date(),
-      };
-      console.log('dataToSave===>', dataToSave);
-      const user = await new Test(dataToSave).save();
-      res.status(httpStatus.CREATED);
-  
-      return res.json({ success: true, data: user, message: { en: 'Success', th: 'สำเร็จ' } });
-    } catch (error) {
-      next(error)
-    }
+  try {
+    const orderList = await Order.list(req.query)
+    return res.json({ success: true, data: orderList, message: { en: 'Success', th: 'สำเร็จ' } });
+  } catch (error) {
+    next(error)
+  }
 }
