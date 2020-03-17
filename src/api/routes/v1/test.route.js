@@ -5,5 +5,6 @@ const { authorize, SUPER_ADMIN, PRODUCT_OWNER } = require('../../middlewares/aut
 
 const router = express.Router();
 router.route('/test').get(controller.test);
+router.route('/created').post(controller.created)
 
 module.exports = router;
